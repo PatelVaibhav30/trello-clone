@@ -6,8 +6,12 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { CreateSafeAction } from "@/lib/create-safe-action";
 import { CreateCard } from "./schema";
+import { CreateAuditLog } from "@/lib/create-audit-log";
+import { ACTION, ENTITY_TYPE } from "@/lib/constant";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
+    // enum ACTION { CREATE = "CREATE", UPDATE = "UPDATE", DELETE = "UPDATE" }
+    // enum ENTITY_TYPE { BOARD = "BOARD", LIST = "LIST", CARD = "CARD" }
     const { userId, orgId } = auth();
 
     if (!userId || !orgId) {
@@ -50,6 +54,14 @@ const handler = async (data: InputType): Promise<ReturnType> => {
                 order: newOrder,
             },
         });
+
+        await CreateAuditLog({
+            entityId: card.id,
+            entityTitle: card.title,
+            entityType: ENTITY_TYPE.CARD,
+            action: ACTION.CREATE
+        });
+        
     } catch (error) {
         return {
             error: "Failed to create"
